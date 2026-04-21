@@ -1,0 +1,189 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "4fccb0a9-8cc9-4d61-b1ee-2edff1bc0210",
+      "name": "Telegram Trigger",
+      "webhookId": "515dcf1e-330d-4476-8185-2066d2674e60",
+      "credentials": {
+        "telegramApi": {
+          "id": "dmRF672Tkxs6DBOq",
+          "name": "Telegram account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "fileId": "={{ $json.message.photo[3].file_id }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        208,
+        0
+      ],
+      "id": "7c0e4ccd-63f9-42b9-b476-fdce59f6f6ce",
+      "name": "Get a file",
+      "webhookId": "58e358cc-e784-4ee4-8038-70628aef3003",
+      "credentials": {
+        "telegramApi": {
+          "id": "dmRF672Tkxs6DBOq",
+          "name": "Telegram account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.remove.bg/v1.0/removebg",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Api-Key",
+              "value": "Sk8dmN4wqjsBBWtPXR5Bef8a"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "parameterType": "formBinaryData",
+              "name": "image_file",
+              "inputDataFieldName": "data"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        416,
+        0
+      ],
+      "id": "428c3629-0015-49ef-a5a3-ef929f3b7c77",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Lấy yêu cầu từ Telegram\nconst caption = $node[\"Telegram Trigger\"].json.message.caption || \"khong_co_yeu_cau\";\n\n// Làm sạch text tạo tên file\nconst safeText = caption.normalize(\"NFD\").replace(/[\\u0300-\\u036f]/g, \"\").replace(/[^a-zA-Z0-9]/g, \"_\").substring(0, 15);\nconst timestamp = new Date().getTime();\n\n// Lấy toàn bộ dữ liệu từ bước trước truyền sang (bao gồm cả file ảnh Binary)\nlet items = $input.all();\n\n// Gắn thêm cái tên file mới vào bộ dữ liệu này\nitems[0].json.fileName = `Nam_KetQua_${safeText}_${timestamp}.jpg`;\n\n// Trả về kết quả (Lúc này gói hàng đi tiếp sẽ có cả Tên File lẫn Ảnh)\nreturn items;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        624,
+        0
+      ],
+      "id": "f1790474-ecaa-4a9a-94d7-2c75c7dad5e0",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "name": "={{ $json.fileName }}",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "1GeN_6uB6kk46igwCKvzz7q81i0Bs4Nvv",
+          "mode": "list",
+          "cachedResultName": "NopBaiGiuaKy_Nam",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/1GeN_6uB6kk46igwCKvzz7q81i0Bs4Nvv"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        832,
+        0
+      ],
+      "id": "e9466378-4360-47d3-b6d3-d38bc6b13f5c",
+      "name": "Upload file",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "Uj66vAYSgtiyGar9",
+          "name": "Google Drive OAuth2 API"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get a file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get a file": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Upload file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "9060dda8-4e77-4f6c-95d3-c4bc83ecb933",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "3176180bb78767a8b7588d1b3637749cce7bf76f70e83b3e5d44367eeb3fd970"
+  },
+  "id": "pDRBAcDkyBUnHJSB",
+  "tags": []
+}
